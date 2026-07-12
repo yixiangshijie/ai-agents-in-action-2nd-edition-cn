@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Agents in Action | AI 智能体实战</title>
+  <meta name="description" content="《AI Agents in Action》第二版中英文对照翻译在线阅读">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    :root {
+      --theme-color: #3eaf7c;
+    }
+
+    mark {
+      background-color: #fff3cd;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .markdown-section {
+      max-width: 900px;
+    }
+
+    .sidebar-nav > ul > li > p {
+      font-weight: 600;
+      color: #34495e;
+      margin: 12px 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">加载中...</div>
+  <script>
+    (function () {
+      // GitHub Pages 项目站部署在 /仓库名/ 子路径，本地预览则在根路径 /
+      var repo = 'ai-agents-in-action-2-edition-cn';
+      var basePath = '/';
+      if (location.hostname.endsWith('github.io')) {
+        basePath = '/' + repo + '/';
+      }
+
+      window.$docsify = {
+        basePath: basePath,
+        name: 'AI 智能体实战',
+        nameLink: basePath,
+        repo: 'yixiangshijie/' + repo,
+        relativePath: false,
+        loadSidebar: true,
+        loadNavbar: true,
+        coverpage: false,
+        auto2top: true,
+        subMaxLevel: 3,
+        homepage: 'README.md',
+        notFoundPage: true,
+        requestHeaders: {
+          'cache-control': 'max-age=0'
+        },
+        search: {
+          maxAge: 86400000,
+          paths: 'auto',
+          placeholder: '搜索章节内容...',
+          noData: '没有找到结果',
+          depth: 3
+        },
+        pagination: {
+          previousText: '上一章',
+          nextText: '下一章',
+          crossChapter: true
+        },
+        plugins: [
+          function (hook, vm) {
+            hook.beforeEach(function (markdown) {
+              var base = vm.config.basePath || '/';
+              return markdown
+                .replace(/!\[([^\]]*)\]\(\.\/images\//g, function (_, alt) {
+                  return '![' + alt + '](' + base + 'images/';
+                })
+                .replace(/!\[([^\]]*)\]\(\.\.\/images\//g, function (_, alt) {
+                  return '![' + alt + '](' + base + 'images/';
+                })
+                .replace(/!\[([^\]]*)\]\(images\//g, function (_, alt) {
+                  return '![' + alt + '](' + base + 'images/';
+                });
+            });
+            hook.afterEach(function (html, next) {
+              var base = vm.config.basePath || '/';
+              next(html.replace(/src="(?:\.\/|\.\.\/|cn-book\/)?images\//g, 'src="' + base + 'images/'));
+            });
+          }
+        ]
+      };
+    })();
+  </script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/copy-code.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+</body>
+</html>
