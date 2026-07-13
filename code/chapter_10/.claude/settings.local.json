@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from agents import Agent, Runner; print\\(''openai-agents OK''\\)\")",
+      "Bash(python 10_confidence_gate.py)",
+      "Bash(python 11_stagnation_detector.py)",
+      "Bash(python 12_boundary_awareness.py)",
+      "Bash(npx -y @modelcontextprotocol/server-memory --help)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''09_cognitive_agent.py''\\).read\\(\\)\\); print\\(''09_cognitive_agent.py: syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''08_cognitive_loop.py''\\).read\\(\\)\\); print\\(''08_cognitive_loop.py: syntax OK''\\)\")"
+    ]
+  }
+}

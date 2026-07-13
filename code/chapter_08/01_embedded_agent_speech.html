@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>OpenAI Realtime Voice Agent — Single HTML</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        /* ===== 1) Design tokens (LIGHT THEME) ===== */
+        :root {
+            /* Base text + surfaces */
+            --bg: #f6f8fa;
+            --text: #24292f;
+            --muted: #57606a;
+
+            --panel: #ffffff;
+            --panel-border: #d0d7de;
+            --divider: #e5e7eb;
+
+            /* Accents & statuses */
+            --accent: #0969da;
+            --accent-contrast: #ffffff;
+            --ok: #1a7f37;
+            --err: #cf222e;
+
+            /* Inputs */
+            --input-bg: #ffffff;
+            --input-border: #d0d7de;
+            --input-placeholder: #6e7781;
+            --input-focus: #0969da;
+
+            /* Buttons */
+            --btn-bg: #0969da;
+            --btn-text: #ffffff;
+            --btn-border: #0969da;
+            --btn-hover-bg: #0759b8;
+
+            --btn-secondary-bg: #f6f8fa;
+            --btn-secondary-text: #24292f;
+            --btn-secondary-border: #d0d7de;
+            --btn-secondary-hover-bg: #eef1f4;
+
+            /* Chips / Pills */
+            --chip-bg: #eef1f4;
+
+            /* Chat bubbles */
+            --bubble-user-bg: #dbeafe;
+            /* light blue */
+            --bubble-user-text: #0f172a;
+            --bubble-assistant-bg: #e7f5ee;
+            /* light green */
+            --bubble-assistant-text: #062c1a;
+            --bubble-sys-bg: #f0f2f6;
+            --bubble-sys-text: #616c76;
+
+            /* Effects */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, .04), 0 1px 1px rgba(0, 0, 0, .03);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, .08);
+
+            /* Scrollbar (WebKit) */
+            --scrollbar-thumb: #c5d0db;
+            --scrollbar-track: #f1f4f8;
+        }
+
+        /* ===== 2) Base layout ===== */
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        .wrap {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* ===== 3) Header / panels ===== */
+        header,
+        .chat {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 12px;
+        }
+
+        .chat {
+            padding: 12px;
+            margin-top: 14px;
+            height: 52vh;
+            overflow: auto;
+        }
+
+        /* ===== 4) Controls ===== */
+        header input[type="password"],
+        header input[type="text"],
+        header select {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            min-width: 260px;
+        }
+
+        header input::placeholder {
+            color: var(--input-placeholder);
+        }
+
+        header input:focus,
+        header select:focus,
+        .composer input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            /* Soft focus ring using accent color */
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+        }
+
+        header button {
+            border: 1px solid var(--btn-border);
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        header button:hover {
+            background: var(--btn-hover-bg);
+        }
+
+        header button.secondary {
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            border: 1px solid var(--btn-secondary-border);
+        }
+
+        header button.secondary:hover {
+            background: var(--btn-secondary-hover-bg);
+        }
+
+        .pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--chip-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--muted);
+        }
+
+        .status {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .status.ok {
+            color: var(--ok);
+        }
+
+        .status.err {
+            color: var(--err);
+        }
+
+        .hint {
+            color: var(--muted);
+        }
+
+        /* ===== 5) Messages ===== */
+        .message,
+        .msg {
+            /* support either class name */
+            padding: 10px 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            max-width: 80%;
+            white-space: pre-wrap;
+        }
+
+        .message.user,
+        .msg.user {
+            background: var(--bubble-user-bg);
+            color: var(--bubble-user-text);
+            margin-left: auto;
+        }
+
+        .message.assistant,
+        .msg.assistant {
+            background: var(--bubble-assistant-bg);
+            color: var(--bubble-assistant-text);
+        }
+
+        .message.sys,
+        .msg.sys {
+            background: var(--bubble-sys-bg);
+            color: var(--bubble-sys-text);
+            font-style: italic;
+        }
+
+        /* ===== 6) Composer ===== */
+        .composer {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .composer input {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .composer button {
+            border: 1px solid var(--btn-secondary-border);
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        .composer button:hover {
+            background: var(--btn-secondary-hover-bg);
+        }
+
+        /* ===== 7) Scrollbar (WebKit) ===== */
+        .chat::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .chat::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 8px;
+            border: 3px solid var(--panel);
+        }
+
+        .chat::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        /* ===== 8) Optional: dark theme override (toggle by adding .theme-dark to <body>) ===== */
+        /*
+        body.theme-dark {
+        --bg:#0d1117; --panel:#161b22; --panel-border:#232a33;
+        --text:#c9d1d9; --muted:#8b949e; --divider:#30363d;
+
+        --accent:#58a6ff; --accent-contrast:#0d1117;
+        --ok:#2ea043; --err:#f85149;
+
+        --input-bg:#0b0f14; --input-border:#232a33; --input-placeholder:#8b949e; --input-focus:#58a6ff;
+
+        --btn-bg:#1f6feb; --btn-text:#ffffff; --btn-border:#1f6feb; --btn-hover-bg:#1b61d1;
+
+        --btn-secondary-bg:#30363d; --btn-secondary-text:#c9d1d9;
+        --btn-secondary-border:#30363d; --btn-secondary-hover-bg:#2a313a;
+
+        --chip-bg:#11161c;
+
+        --bubble-user-bg:#1b2838; --bubble-user-text:#c9d1d9;
+        --bubble-assistant-bg:#0e4429; --bubble-assistant-text:#b6e3c6;
+        --bubble-sys-bg:#2d333b; --bubble-sys-text:#8b949e;
+
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+        --shadow-md: 0 8px 30px rgba(0,0,0,.35);
+
+        --scrollbar-thumb:#3a424b; --scrollbar-track:#0f141a;
+        }
+        */
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <header>
+            <div class="row" style="gap:8px">
+                <label class="pill">Model</label>
+                <select id="model">
+                    <option value="gpt-4o-realtime-preview-2025-06-03">gpt-4o-realtime-preview-2025-06-03</option>
+                </select>
+                <label class="pill">Voice</label>
+                <select id="voice">
+                    <option>alloy</option>
+                    <option>verse</option>
+                    <option>aria</option>
+                </select>
+            </div>
+
+            <input id="ephemeral" type="password" placeholder="Paste ephemeral client key…" />
+            <button id="connectBtn">Connect mic</button>
+            <button id="disconnectBtn" class="secondary" disabled>Disconnect</button>
+            <div id="status" class="status">idle</div>
+            <div class="hint">You’ll be prompted for microphone access on connect.</div>
+        </header>
+
+        <div id="chat" class="chat" aria-live="polite"></div>
+
+        <form id="composer" class="composer" autocomplete="off">
+            <input id="textInput" placeholder="Type a message and press Enter (voice works in parallel)" />
+            <button type="submit" title="Send text message">Send</button>
+            <button id="stopBtn" type="button" class="secondary" title="Interrupt current reply">Stop</button>
+        </form>
+
+        <footer>
+            <div>How to get a <strong>client ephemeral key</strong> (valid briefly):</div>
+            <pre class="kbd">curl -s -X POST https://api.openai.com/v1/realtime/sessions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "gpt-4o-realtime-preview-2025-06-03" }' | jq -r '.client_secret.value'</pre>
+            <div>This follows the official Voice Agents quickstart for browser Realtime sessions. In production, mint
+                the key on your backend. :contentReference[oaicite:4]{index=4}</div>
+        </footer>
+
+    </div>
+
+    <script type="module">
+        // IMPORTANT: Use the browser-targeted package via an ESM CDN.
+        // The "+esm" suffix tells jsDelivr to serve a real ES module (fixes bare-specifier & MIME issues).
+        import { RealtimeAgent, RealtimeSession } from 'https://cdn.jsdelivr.net/npm/@openai/agents-realtime@0.0.17/+esm';
+
+        // --- UI helpers ---
+        const $ = (sel) => document.querySelector(sel);
+        const chatEl = $('#chat');
+        const statusEl = $('#status');
+        const connectBtn = $('#connectBtn');
+        const disconnectBtn = $('#disconnectBtn');
+        const stopBtn = $('#stopBtn');
+        const textForm = $('#composer');
+        const textInput = $('#textInput');
+        const tokenInput = $('#ephemeral');
+        const modelSel = $('#model');
+        const voiceSel = $('#voice');
+
+        const addMsg = (role, text) => {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.textContent = text;
+            chatEl.appendChild(div);
+            chatEl.scrollTop = chatEl.scrollHeight;
+        };
+        const setStatus = (t, cls = '') => {
+            statusEl.textContent = t;
+            statusEl.className = `status ${cls}`;
+        };
+
+        // --- Agent & session state ---
+        // Keep the agent fairly neutral and concise.
+        const agent = new RealtimeAgent({
+            name: 'Assistant',
+            instructions: 'You are a helpful, concise voice assistant. Speak naturally and keep replies brief unless asked for detail.',
+        });
+
+        let session = null;
+
+        // Extract human-readable text from a Realtime history item.
+        function itemToText(item) {
+            // Messages have role + content array with segments like {type:"output_text", text}, {type:"audio", transcript}, etc.
+            if (!item) return '';
+            if (typeof item.content === 'string') return item.content;
+            if (Array.isArray(item.content)) {
+                return item.content
+                    .map(p => (p && (p.text || p.transcript || p.refusal)) || '')
+                    .filter(Boolean)
+                    .join(' ');
+            }
+            // Some providers place transcript at top-level
+            if (item.transcript) return item.transcript;
+            if (item.formatted && item.formatted.text) return item.formatted.text;
+            return '';
+        }
+
+        function renderHistory(history) {
+            chatEl.innerHTML = '';
+            // Only show user/assistant "message" items; ignore transport internals
+            for (const item of history) {
+                if (item.type === 'message' && (item.role === 'user' || item.role === 'assistant')) {
+                    const who = item.role === 'assistant' ? 'assistant' : 'user';
+                    const txt = itemToText(item);
+                    if (txt) addMsg(who, (who === 'assistant' ? '' : 'You: ') + txt);
+                }
+            }
+        }
+
+        // Wire buttons / form
+        connectBtn.addEventListener('click', async () => {
+            if (session) return;
+
+            const apiKey = tokenInput.value.trim();
+            if (!apiKey) {
+                tokenInput.focus();
+                tokenInput.placeholder = 'Paste a valid ephemeral client key first';
+                return;
+            }
+
+            // Build a new session each time we connect (so mic/speaker are re-bound cleanly)
+            session = new RealtimeSession(agent, {
+                model: modelSel.value,
+                // Session config: we’ll let the API do VAD + STT for us.
+                // (See docs: session config & turn detection) :contentReference[oaicite:5]{index=5}
+                config: {
+                    inputAudioTranscription: { model: 'gpt-4o-mini-transcribe' },
+                    turnDetection: { type: 'semantic_vad', eagerness: 'medium', createResponse: true, interruptResponse: true },
+                },
+                // Pass provider-specific fields (e.g., voice) straight through to Realtime "session"
+                // (Docs: unknown/new fields go via providerData) :contentReference[oaicite:6]{index=6}
+                providerData: { voice: voiceSel.value },
+            });
+
+            // Events (Docs: RealtimeSession emits history_updated, tool_approval_requested, guardrail_tripped, etc.) :contentReference[oaicite:7]{index=7}
+            session.on('history_updated', (history) => renderHistory(history));
+            session.on('audio_start', () => setStatus('speaking…', 'ok'));
+            session.on('audio_stopped', () => setStatus('connected', 'ok'));
+            session.on('error', (err) => {
+                console.error(err);
+                setStatus(err?.message || 'error', 'err');
+                addMsg('sys', `Error: ${err?.message || String(err)}`);
+            });
+
+            try {
+                setStatus('connecting…');
+                // Connect over WebRTC; SDK asks for mic + sets up speaker output automatically. :contentReference[oaicite:8]{index=8}
+                await session.connect({ apiKey });
+                addMsg('sys', 'Connected. You can speak now. Type as well if you like.');
+                setStatus('connected', 'ok');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                tokenInput.disabled = true;
+                modelSel.disabled = true;
+                voiceSel.disabled = true;
+            } catch (e) {
+                console.error(e);
+                addMsg('sys', 'Failed to connect.');
+                setStatus('failed', 'err');
+                session = null;
+            }
+        });
+
+        disconnectBtn.addEventListener('click', () => {
+            if (session) {
+                try { session.disconnect(); } catch { }
+                session = null;
+            }
+            addMsg('sys', 'Disconnected.');
+            setStatus('idle');
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            tokenInput.disabled = false;
+            modelSel.disabled = false;
+            voiceSel.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', () => {
+            // Interrupts current assistant speech / generation (per docs). :contentReference[oaicite:9]{index=9}
+            if (session) session.interrupt();
+        });
+
+        textForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = textInput.value.trim();
+            if (!text || !session) return;
+            // Parallel text + voice input is supported: send a message; Realtime will respond and the UI will update via history_updated.
+            session.sendMessage(text);
+            textInput.value = '';
+        });
+
+        // On load, leave a hint
+        addMsg('sys', 'Paste a client ephemeral key, pick a voice, then click “Connect mic”.');
+    </script>
+
+</body>
+
+</html>

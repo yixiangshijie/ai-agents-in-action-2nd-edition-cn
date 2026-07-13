@@ -1,0 +1,26 @@
+graph TD
+    START([Start]) --> INIT[Initialize TaskState<br/>Load items into queue]
+    INIT --> MCP[Connect MCP Servers<br/>Filesystem, Search, etc.]
+    MCP --> CHECK{Queue has items<br/>AND under iteration limit?}
+
+    CHECK -->|Yes| POP[Pop next item from queue]
+    POP --> AGENT[Run Task Agent<br/>with item + previous error context]
+    AGENT --> SUCCESS{Success?}
+
+    SUCCESS -->|Yes| RECORD_OK[Record success<br/>Move to completed list]
+    SUCCESS -->|No / Exception| RETRY{Retries<br/>remaining?}
+
+    RETRY -->|Yes| REQUEUE[Push item back<br/>to end of queue]
+    RETRY -->|No| RECORD_FAIL[Mark permanently failed]
+
+    RECORD_OK --> PROGRESS[Update progress]
+    REQUEUE --> PROGRESS
+    RECORD_FAIL --> PROGRESS
+    PROGRESS --> CHECK
+
+    CHECK -->|No| DONE([Output results:<br/>completed + failed])
+
+    style CHECK fill:#fff3e0,stroke:#FF9800
+    style AGENT fill:#e8f4f8,stroke:#2196F3
+    style RETRY fill:#fce4ec,stroke:#E91E63
+    style RECORD_OK fill:#e8f8e8,stroke:#4CAF50

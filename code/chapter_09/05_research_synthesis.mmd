@@ -1,0 +1,21 @@
+graph TD
+    START([Start]) --> INIT[Initialize State + Empty Plan]
+    INIT --> MCP[Connect to Brave Search MCP Server]
+    MCP --> CHECK{More questions<br/>AND under iteration limit<br/>AND not complete?}
+
+    CHECK -->|Yes| POP[Pop next question]
+    POP --> AGENT[Run Research Agent<br/>with state + plan context]
+    AGENT --> UPDATE[Update findings,<br/>sources, questions]
+    UPDATE --> PLAN[Update Research Plan]
+    PLAN --> GOAL{Agent says<br/>goal satisfied?}
+    GOAL -->|Yes| DONE[Mark complete]
+    GOAL -->|No| CHECK
+    DONE --> CHECK
+
+    CHECK -->|No| SYNTH[Run Synthesis Agent<br/>with findings + plan]
+    SYNTH --> REPORT([Output Research Report])
+
+    style CHECK fill:#fff3e0,stroke:#FF9800
+    style AGENT fill:#e8f4f8,stroke:#2196F3
+    style PLAN fill:#e8f8e8,stroke:#4CAF50
+    style SYNTH fill:#f3e8f4,stroke:#9C27B0

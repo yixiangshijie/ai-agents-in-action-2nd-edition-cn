@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>OpenAI Realtime Voice Agent — Image Tool Demo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        /* ===== 1) Design tokens (LIGHT THEME) ===== */
+        :root {
+            /* Base text + surfaces */
+            --bg: #f6f8fa;
+            --text: #24292f;
+            --muted: #57606a;
+
+            --panel: #ffffff;
+            --panel-border: #d0d7de;
+            --divider: #e5e7eb;
+
+            /* Accents & statuses */
+            --accent: #0969da;
+            --accent-contrast: #ffffff;
+            --ok: #1a7f37;
+            --err: #cf222e;
+
+            /* Inputs */
+            --input-bg: #ffffff;
+            --input-border: #d0d7de;
+            --input-placeholder: #6e7781;
+            --input-focus: #0969da;
+
+            /* Buttons */
+            --btn-bg: #0969da;
+            --btn-text: #ffffff;
+            --btn-border: #0969da;
+            --btn-hover-bg: #0759b8;
+
+            --btn-secondary-bg: #f6f8fa;
+            --btn-secondary-text: #24292f;
+            --btn-secondary-border: #d0d7de;
+            --btn-secondary-hover-bg: #eef1f4;
+
+            /* Chips / Pills */
+            --chip-bg: #eef1f4;
+
+            /* Chat bubbles */
+            --bubble-user-bg: #dbeafe;
+            /* light blue */
+            --bubble-user-text: #0f172a;
+            --bubble-assistant-bg: #e7f5ee;
+            /* light green */
+            --bubble-assistant-text: #062c1a;
+            --bubble-sys-bg: #f0f2f6;
+            --bubble-sys-text: #616c76;
+
+            /* Effects */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, .04), 0 1px 1px rgba(0, 0, 0, .03);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, .08);
+
+            /* Scrollbar (WebKit) */
+            --scrollbar-thumb: #c5d0db;
+            --scrollbar-track: #f1f4f8;
+        }
+
+        /* ===== 2) Base layout ===== */
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        .wrap {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* ===== 3) Header / panels ===== */
+        header,
+        .chat {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 12px;
+        }
+
+        .chat {
+            padding: 12px;
+            margin-top: 14px;
+            height: 52vh;
+            overflow: auto;
+        }
+
+        /* ===== 4) Controls ===== */
+        header input[type="password"],
+        header input[type="text"],
+        header select {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            min-width: 260px;
+        }
+
+        header input::placeholder {
+            color: var(--input-placeholder);
+        }
+
+        header input:focus,
+        header select:focus,
+        .composer input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+        }
+
+        header button {
+            border: 1px solid var(--btn-border);
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        header button:hover {
+            background: var(--btn-hover-bg);
+        }
+
+        header button.secondary {
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            border: 1px solid var(--btn-secondary-border);
+        }
+
+        header button.secondary:hover {
+            background: var(--btn-secondary-hover-bg);
+        }
+
+        .pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--chip-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--muted);
+        }
+
+        .status {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .status.ok {
+            color: var(--ok);
+        }
+
+        .status.err {
+            color: var(--err);
+        }
+
+        .hint {
+            color: var(--muted);
+        }
+
+        /* ===== 5) Messages ===== */
+        .msg {
+            padding: 10px 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            max-width: 80%;
+            white-space: pre-wrap;
+        }
+
+        .msg.user {
+            background: var(--bubble-user-bg);
+            color: var(--bubble-user-text);
+            margin-left: auto;
+        }
+
+        .msg.assistant {
+            background: var(--bubble-assistant-bg);
+            color: var(--bubble-assistant-text);
+        }
+
+        .msg.sys {
+            background: var(--bubble-sys-bg);
+            color: var(--bubble-sys-text);
+            font-style: italic;
+        }
+
+        /* Image bubble */
+        .msg.assistant.image {
+            padding: 6px;
+        }
+
+        .msg.assistant.image figure {
+            margin: 0;
+        }
+
+        .msg.assistant.image img {
+            max-width: 100%;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .msg.assistant.image figcaption {
+            font-size: 12px;
+            color: var(--muted);
+            padding: 4px 6px 2px;
+        }
+
+        /* ===== 6) Composer ===== */
+        .composer {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .composer input {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .composer button {
+            border: 1px solid var(--btn-secondary-border);
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        .composer button:hover {
+            background: var(--btn-secondary-hover-bg);
+        }
+
+        /* ===== 7) Scrollbar (WebKit) ===== */
+        .chat::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .chat::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 8px;
+            border: 3px solid var(--panel);
+        }
+
+        .chat::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="row" style="display:flex; gap:8px; align-items:center;">
+                <label class="pill">Model</label>
+                <select id="model">
+                    <option value="gpt-4o-realtime-preview-2025-06-03">gpt-4o-realtime-preview-2025-06-03</option>
+                </select>
+                <label class="pill">Voice</label>
+                <select id="voice">
+                    <option>alloy</option>
+                    <option>verse</option>
+                    <option>aria</option>
+                </select>
+            </div>
+
+            <input id="ephemeral" type="password" placeholder="Paste ephemeral client key…" />
+            <input id="imgApiBase" type="text" placeholder="Image API base (http://localhost:8000)" />
+
+            <button id="connectBtn">Connect mic</button>
+            <button id="disconnectBtn" class="secondary" disabled>Disconnect</button>
+            <div id="status" class="status">idle</div>
+            <div class="hint">You’ll be prompted for microphone access on connect.</div>
+        </header>
+
+        <div id="chat" class="chat" aria-live="polite"></div>
+
+        <form id="composer" class="composer" autocomplete="off">
+            <input id="textInput"
+                placeholder="Ask me anything — e.g. “Create an image of a friendly robot in a lab.”  (Tip: /image your prompt)" />
+            <button type="submit" title="Send text message">Send</button>
+            <button id="stopBtn" type="button" class="secondary" title="Interrupt current reply">Stop</button>
+        </form>
+
+        <footer>
+            <div>Get a <strong>client ephemeral key</strong> (valid briefly):</div>
+            <pre class="kbd"># PowerShell (no jq needed)
+    (Invoke-RestMethod -Uri "https://api.openai.com/v1/realtime/sessions" -Method POST `
+      -Headers @{ Authorization = "Bearer $env:OPENAI_API_KEY" } `
+      -ContentType "application/json" `
+      -Body '{"model":"gpt-4o-realtime-preview-2025-06-03"}').client_secret.value</pre>
+            <div>In production, mint the key on your backend and pass it to the browser after auth.</div>
+
+            <!--
+            Option: Bash (commented out). Uncomment below if you prefer to use curl + jq to obtain the ephemeral key.
+
+            <div>Get a <strong>client ephemeral key</strong> using Bash:</div>
+            <pre class="kbd"># Bash (curl + jq)
+    curl -s -X POST "https://api.openai.com/v1/realtime/sessions" \
+      -H "Authorization: Bearer $OPENAI_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"model":"gpt-4o-realtime-preview-2025-06-03"}' | jq -r '.client_secret.value'
+    </pre>
+            -->
+        </footer>
+    </div>
+
+    <script type="module">
+        // Import the browser-targeted Realtime SDK (+esm ensures a proper ES module).
+        import { RealtimeAgent, RealtimeSession, tool } from 'https://cdn.jsdelivr.net/npm/@openai/agents-realtime@0.0.17/+esm';
+
+        // --- UI helpers ---
+        const $ = (sel) => document.querySelector(sel);
+        const chatEl = $('#chat');
+        const statusEl = $('#status');
+        const connectBtn = $('#connectBtn');
+        const disconnectBtn = $('#disconnectBtn');
+        const stopBtn = $('#stopBtn');
+        const textForm = $('#composer');
+        const textInput = $('#textInput');
+        const tokenInput = $('#ephemeral');
+        const modelSel = $('#model');
+        const voiceSel = $('#voice');
+        const imgApiBaseInput = $('#imgApiBase');
+
+        const setStatus = (t, cls = '') => { statusEl.textContent = t; statusEl.className = `status ${cls}`; };
+
+        const addMsg = (role, text) => {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.textContent = text;
+            chatEl.appendChild(div);
+            chatEl.scrollTop = chatEl.scrollHeight;
+        };
+
+        // ---- Persistent image feed (survives chat re-renders) ----
+        let lastHistory = [];
+        const imageFeed = []; // [{ id, url, caption, ts }]
+
+        function buildImageNode(url, caption = '') {
+            const div = document.createElement('div');
+            div.className = `msg assistant image`;
+            const fig = document.createElement('figure');
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = caption || 'Generated image';
+            const cap = document.createElement('figcaption');
+            cap.textContent = caption || 'Generated image';
+            fig.appendChild(img);
+            fig.appendChild(cap);
+            div.appendChild(fig);
+            return div;
+        }
+
+        function addImageToFeed(url, caption = '') {
+            imageFeed.push({ id: crypto.randomUUID?.() || String(Math.random()), url, caption, ts: Date.now() });
+            renderHistory(lastHistory);
+        }
+
+        // ---- History rendering ----
+        function itemToText(item) {
+            if (!item) return '';
+            if (typeof item.content === 'string') return item.content;
+            if (Array.isArray(item.content)) {
+                return item.content
+                    .map(p => (p && (p.text || p.transcript || p.refusal)) || '')
+                    .filter(Boolean)
+                    .join(' ');
+            }
+            if (item.transcript) return item.transcript;
+            if (item.formatted && item.formatted.text) return item.formatted.text;
+            return '';
+        }
+
+        function renderHistory(history) {
+            lastHistory = history;
+            chatEl.innerHTML = '';
+            for (const item of history) {
+                if (item.type === 'message' && (item.role === 'user' || item.role === 'assistant')) {
+                    const who = item.role === 'assistant' ? 'assistant' : 'user';
+                    const txt = itemToText(item);
+                    if (txt) addMsg(who, (who === 'assistant' ? '' : 'You: ') + txt);
+                }
+            }
+            // After messages, render any locally generated images
+            for (const img of imageFeed) chatEl.appendChild(buildImageNode(img.url, img.caption));
+            chatEl.scrollTop = chatEl.scrollHeight;
+        }
+
+        // ----------- IMAGE TOOL (calls your FastAPI /generate) -----------
+        const generateImageTool = tool({
+            name: 'generate_image',
+            description: 'Generate an image by calling the local Image API. Use whenever the user asks to create/draw/generate an image.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    input: { type: 'string', description: 'Concise description of the desired image.' }
+                },
+                required: ['input'],
+                additionalProperties: false
+            },
+            async execute({ input }) {
+                const base = (imgApiBaseInput.value.trim() || 'http://localhost:8000').replace(/\/+$/, '');
+                try {
+                    const res = await fetch(`${base}/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'image/png,application/json' },
+                        body: JSON.stringify({ input })
+                    });
+                    if (!res.ok) {
+                        const text = await res.text().catch(() => '');
+                        throw new Error(`Image API error ${res.status}${text ? `: ${text}` : ''}`);
+                    }
+                    const ct = (res.headers.get('content-type') || '').toLowerCase();
+                    let url = null;
+                    if (ct.startsWith('image/')) {
+                        const blob = await res.blob();
+                        url = URL.createObjectURL(blob);
+                    } else if (ct.includes('application/json')) {
+                        const data = await res.json();
+                        if (data.file_url) {
+                            // handle both "/images/..." and "images/..." responses
+                            const path = data.file_url.startsWith('/') ? data.file_url : `/${data.file_url}`;
+                            url = `${base}${path}`;
+                        } else if (data.base64) {
+                            url = `data:image/png;base64,${data.base64}`;
+                        } else {
+                            throw new Error('JSON response missing file_url or base64');
+                        }
+                    } else {
+                        throw new Error(`Unexpected content-type: ${ct || '(none)'}`);
+                    }
+                    addImageToFeed(url, input);
+                    return `Created an image for: "${input}".`;
+                } catch (err) {
+                    console.error(err);
+                    addMsg('sys', `Image generation failed: ${err?.message || String(err)}`);
+                    return 'I could not generate the image due to an error.';
+                }
+            }
+        });
+        // -----------------------------------------------------------------
+
+        // ---- Agent: English-only responses; will call generate_image when asked ----
+        const agent = new RealtimeAgent({
+            name: 'Assistant',
+            instructions: [
+                'You are a helpful, concise voice assistant.',
+                'Respond in English only.',
+                'When the user asks to create/make/draw/generate an image, call the tool "generate_image" with a clear, concise description in the "input" field.',
+                'Do not invent size/model/quality; the image service is fixed-config.',
+                'After the tool completes, briefly confirm that the image is displayed.'
+            ].join(' '),
+            tools: [generateImageTool]
+        });
+
+        let session = null;
+
+        function wireSessionEvents(s) {
+            s.on('history_updated', (history) => renderHistory(history));
+            s.on('audio_start', () => setStatus('speaking…', 'ok'));
+            s.on('audio_stopped', () => setStatus('connected', 'ok'));
+            s.on('agent_tool_start', (_ctx, _agent, t, args) => {
+                if (t?.name === 'generate_image') setStatus('generating image…', 'ok');
+            });
+            s.on('agent_tool_end', (_ctx, _agent, t) => {
+                if (t?.name === 'generate_image') setStatus('connected', 'ok');
+            });
+            s.on('error', (err) => {
+                console.error(err);
+                setStatus(err?.message || 'error', 'err');
+                addMsg('sys', `Error: ${err?.message || String(err)}`);
+            });
+        }
+
+        // ---- Connect / disconnect / stop ----
+        connectBtn.addEventListener('click', async () => {
+            if (session) return;
+
+            const apiKey = tokenInput.value.trim();
+            if (!apiKey) { tokenInput.focus(); tokenInput.placeholder = 'Paste a valid ephemeral client key first'; return; }
+
+            session = new RealtimeSession(agent, {
+                model: modelSel.value,
+                // Force English transcription to avoid accidental language switching
+                config: {
+                    inputAudioTranscription: { model: 'gpt-4o-mini-transcribe', language: 'en' },
+                    turnDetection: { type: 'semantic_vad', eagerness: 'medium', createResponse: true, interruptResponse: true },
+                },
+                // Pass provider-specific voice selection (unknown fields are ignored safely)
+                providerData: { voice: voiceSel.value }
+            });
+
+            wireSessionEvents(session);
+
+            try {
+                setStatus('connecting…');
+                await session.connect({ apiKey }); // WebRTC + mic/speaker setup
+                addMsg('sys', 'Connected. Speak or type your request.');
+                setStatus('connected', 'ok');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                tokenInput.disabled = true;
+                modelSel.disabled = true;
+                voiceSel.disabled = true;
+                imgApiBaseInput.disabled = false;
+            } catch (e) {
+                console.error(e);
+                addMsg('sys', 'Failed to connect.');
+                setStatus('failed', 'err');
+                session = null;
+            }
+        });
+
+        disconnectBtn.addEventListener('click', () => {
+            if (session) { try { session.disconnect(); } catch { } session = null; }
+            addMsg('sys', 'Disconnected.');
+            setStatus('idle');
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            tokenInput.disabled = false;
+            modelSel.disabled = false;
+            voiceSel.disabled = false;
+            imgApiBaseInput.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', () => { if (session) session.interrupt(); });
+
+        // ---- Send text; support a "/image" command that bypasses the model ----
+        textForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = textInput.value.trim();
+            if (!text || !session) return;
+
+            // Slash command to call the tool directly (useful in demos)
+            if (text.toLowerCase().startsWith('/image ')) {
+                const prompt = text.slice('/image '.length).trim();
+                addMsg('user', `You: (image) ${prompt}`);
+                setStatus('generating image…', 'ok');
+                try {
+                    await generateImageTool.execute({ input: prompt });
+                    setStatus('connected', 'ok');
+                } catch (err) {
+                    setStatus('connected');
+                }
+            } else {
+                session.sendMessage(text);
+            }
+            textInput.value = '';
+        });
+
+        // Initial hint
+        addMsg('sys', 'Paste an ephemeral key, pick a voice, then click “Connect mic”. Ask me to create an image, or type “/image a friendly robot reading a book”.');
+    </script>
+</body>
+
+</html>

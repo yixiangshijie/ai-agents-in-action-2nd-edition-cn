@@ -33,7 +33,7 @@
   <script>
     (function () {
       // GitHub Pages 项目站部署在 /仓库名/ 子路径，本地预览则在根路径 /
-      var repo = 'ai-agents-in-action-2-edition-cn';
+      var repo = 'ai-agents-in-action-2nd-edition-cn';
       var basePath = '/';
       if (location.hostname.endsWith('github.io')) {
         basePath = '/' + repo + '/';
@@ -45,8 +45,8 @@
         nameLink: basePath,
         repo: 'yixiangshijie/' + repo,
         relativePath: false,
-        loadSidebar: true,
-        loadNavbar: true,
+        loadSidebar: 'sidebar.md',
+        loadNavbar: 'navbar.md',
         coverpage: false,
         auto2top: true,
         subMaxLevel: 3,
@@ -69,22 +69,16 @@
         },
         plugins: [
           function (hook, vm) {
-            hook.beforeEach(function (markdown) {
-              var base = vm.config.basePath || '/';
-              return markdown
-                .replace(/!\[([^\]]*)\]\(\.\/images\//g, function (_, alt) {
-                  return '![' + alt + '](' + base + 'images/';
-                })
-                .replace(/!\[([^\]]*)\]\(\.\.\/images\//g, function (_, alt) {
-                  return '![' + alt + '](' + base + 'images/';
-                })
-                .replace(/!\[([^\]]*)\]\(images\//g, function (_, alt) {
-                  return '![' + alt + '](' + base + 'images/';
-                });
-            });
             hook.afterEach(function (html, next) {
               var base = vm.config.basePath || '/';
-              next(html.replace(/src="(?:\.\/|\.\.\/|cn-book\/)?images\//g, 'src="' + base + 'images/'));
+              // 统一修正为站点根路径下的 /images/，避免 cn-book/ 前缀叠加
+              html = html.replace(
+                /src="([^"]*\/)?images\/([^"]+)"/g,
+                function (_, _prefix, file) {
+                  return 'src="' + base + 'images/' + file + '"';
+                }
+              );
+              next(html);
             });
           }
         ]

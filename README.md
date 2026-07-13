@@ -1,4 +1,4 @@
-# AI Agents in Action, Second Edition | <mark>AI 智能体实战 · 第二版</mark>
+# AI Agents in Action (2nd Edition) | AI 智能体实战 · 第二版
 
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
@@ -8,15 +8,15 @@
 
 **原书链接 (Original Book)**: [Manning - AI Agents in Action, Second Edition](https://www.manning.com/books/ai-agents-in-action-second-edition)
 
-**GitHub 仓库**: [yixiangshijie/ai-agents-in-action-2-edition-cn](https://github.com/yixiangshijie/ai-agents-in-action-2-edition-cn)
+**GitHub 仓库**: [yixiangshijie/ai-agents-in-action-2nd-edition-cn](https://github.com/yixiangshijie/ai-agents-in-action-2nd-edition-cn)
 
 ---
 
 ## 📖 项目简介 | Project Description
 
-本项目是《AI Agents in Action》**第二版**的中文译本，是一部智能体系统构建与应用的实战指南——目标不止于打造自主实体，更在于开发能够切实应对并解决现实问题的智能体。
+本项目是《AI Agents in Action》**第二版**的中文译本，是一本智能体系统构建与应用的实战指南——目标不止于打造自主实体，更在于开发能够切实应对并解决现实问题的智能体。
 
-全书从使用大语言模型（LLM）构建助手、多智能体系统和具备智能体行为的智能体入手，系统讲解智能体系统的关键组成部分：**人格、工具与行动、知识与记忆、检索与增强、推理与规划、评估与反馈**。第二版将**五个功能层**作为组织原则，并新增 MCP 协议、测试驱动的智能体开发（TDAD）、智能体循环、认知与元认知等前沿主题，帮助开发者构建生产级智能体系统。
+全书从大语言模型（LLM）的基础应用出发，逐步深入到智能助手、多智能体系统与自主智能体的构建，系统讲解智能体系统的关键组成部分：**角色、工具与行动、知识与记忆、检索与增强、推理与规划、评估与反馈**。第二版将**五个功能层**作为组织原则，并新增 MCP 协议、测试驱动的智能体开发（TDAD）、智能体循环、认知与元认知等前沿主题，帮助开发者构建生产级智能体系统。
 
 ### 第二版与第一版
 
@@ -27,9 +27,9 @@
 - **聚焦转变**：第一版侧重解释智能体得以成立的底层概念；第二版则顺应框架发展趋势，不再纠缠内部实现细节，更聚焦如何构建能投入生产的智能体系统
 - **新增专题**：专章介绍 MCP 协议与 Docker 分布式编排部署，并覆盖多智能体工作流、TDAD、RAG 智能体、深度研究智能体、智能体循环与元认知等主题
 
-本书适合任何对智能体开发感到好奇的读者——无论你是初次构建助手，还是深入探索复杂多智能体系统；只需具备 Python 基础即可。
+本书适合任何对智能体开发感到好奇的读者——无论你是初次构建助手，还是深入探索复杂多智能体系统，只需具备 Python 基础即可。
 
-📖 **[在线阅读](https://yixiangshijie.github.io/ai-agents-in-action-2-edition-cn/)**
+📖 **[在线阅读](https://yixiangshijie.github.io/ai-agents-in-action-2nd-edition-cn/)**
 
 ## **关注公众号**，获取更多AI内容：
 
@@ -152,7 +152,7 @@
 
 ### 🌐 在线阅读 | Online Reading
 
-**访问地址**: [ai-agents-in-action-2-edition-cn](https://yixiangshijie.github.io/ai-agents-in-action-2-edition-cn/)
+**访问地址**: [ai-agents-in-action-2nd-edition-cn](https://yixiangshijie.github.io/ai-agents-in-action-2nd-edition-cn/)
 
 
 **本地预览**：

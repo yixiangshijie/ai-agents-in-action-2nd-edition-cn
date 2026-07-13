@@ -1,0 +1,8 @@
+
+    digraph G {
+        graph [splines=true];
+        node [fontname="Arial"];
+        edge [penwidth=1.5];
+    "__start__" [label="__start__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"__end__" [label="__end__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"Research Agent" [label="Research Agent", shape=box, style=filled, fillcolor=lightyellow, width=1.5, height=0.8];"Thinking Agent" [label="Thinking Agent", shape=box, style=filled, style=rounded, fillcolor=lightyellow, width=1.5, height=0.8];"__start__" [label="__start__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"__end__" [label="__end__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"Thinking Agent" [label="Thinking Agent", shape=box, style=filled, fillcolor=lightyellow, width=1.5, height=0.8];"Filesystem Agent" [label="Filesystem Agent", shape=box, style=filled, style=rounded, fillcolor=lightyellow, width=1.5, height=0.8];"__start__" [label="__start__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"__end__" [label="__end__", shape=ellipse, style=filled, fillcolor=lightblue, width=0.5, height=0.3];"Filesystem Agent" [label="Filesystem Agent", shape=box, style=filled, fillcolor=lightyellow, width=1.5, height=0.8];"__start__" -> "Research Agent";
+            "Research Agent" -> "Thinking Agent";
+            "Thinking Agent" -> "Filesystem Agent";"Filesystem Agent" -> "__end__";}

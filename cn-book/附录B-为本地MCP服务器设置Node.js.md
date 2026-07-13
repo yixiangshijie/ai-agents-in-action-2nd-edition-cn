@@ -1,145 +1,261 @@
-# 附录 B 为本地 MCP 服务器设置 Node.js
+# 附录 B 为本地 MCP 服务器配置 Node.js
 
-许多模型上下文协议（MCP）服务器以 Node.js 包的形式在公共 npm 注册表上分发。在本地运行这些服务器最便捷的方式是使用 npx，这是一个随 Node.js 附带的命令行工具。给定一个包名，npx 会下载该包（如果尚未缓存）、解析其可执行入口点并运行它，所有这些都在一个命令中完成。这使得 MCP 客户端（如 Claude Desktop、IDE 插件或自定义智能体）无需编写任何安装脚本，即可指向一个新的 MCP 服务器。
+许多模型上下文协议（Model Context Protocol，MCP）服务器都是以 Node.js 包的形式发布在公共 npm 仓库中的。在本地运行这些服务器最方便的方法是使用 `npx`——一个随 Node.js 一同提供的小型命令行工具。给定一个包名后，`npx` 会自动下载该包（如果尚未缓存）、解析其可执行入口，并在一条命令中直接运行它。借助这一机制，你可以让 Claude Desktop、IDE 插件或自定义智能体等 MCP 客户端直接连接到一个全新的 MCP 服务器，而无需自己编写任何安装脚本。
 
-在利用这一切之前，你需要在机器上安装一个可用的 Node.js。本附录将从头到尾指导你完成这个设置过程。它分为四个部分，遵循自然的设置顺序：安装 Node.js、验证 node 和 npx 是否在 PATH 中、使用 npx 运行一个 MCP 服务器，以及最后的故障排除和长期保持安装健康。
+在使用这些功能之前，你需要确保机器上已经安装了可用的 Node.js 环境。本附录将完整介绍整个配置流程。内容分为四个部分，并按照自然的配置顺序组织：安装 Node.js、验证 `node` 和 `npx` 是否已加入 PATH、使用 `npx` 运行 MCP 服务器，以及最后排查常见问题并长期维护你的安装环境。
 
 ## B.1 安装 Node.js
 
-Node.js 是 npx 依赖的 JavaScript 运行时，它将 npm（包管理器）和 npx 捆绑在一个安装程序中。对于本书中涵盖的 MCP 服务器，请安装 Node 20 或更高版本的当前长期支持（LTS）版本。以下小节显示了每个主要操作系统的推荐安装路径。
+Node.js 是 `npx` 所依赖的 JavaScript 运行时，并且它会通过同一个安装程序同时安装 `npm`（包管理器）和 `npx`。对于本书涉及的 MCP 服务器，建议安装 Node 20 或更高版本的长期支持版（LTS）。以下小节分别介绍各主流操作系统推荐的安装方式。
 
 ### B.1.1 在 Windows 上安装 Node.js
 
 在 Windows 上，最简单的方法是使用官方安装程序：
 
-1. 在浏览器中打开 <https://nodejs.org>，下载适用于 Windows 的 LTS 安装程序。
-2. 双击下载的 .msi 文件并接受默认设置。如果你计划构建原生模块，请保持“自动安装必要工具”选项启用。否则，取消选中它是安全的。
-3. 关闭并重新打开任何已打开的命令提示符或 PowerShell 窗口，以便它们获取更新的 PATH 环境变量。
+1. 使用浏览器打开 <https://nodejs.org>，下载适用于 Windows 的 LTS 安装包。
+2. 双击下载的 `.msi` 文件，并使用默认选项完成安装。如果你计划编译原生模块（native modules），请保持“Automatically Install the Necessary Tools（自动安装必要工具）”选项处于启用状态；否则，可以取消勾选。
+3. 关闭并重新打开所有命令提示符（Command Prompt）或 PowerShell 窗口，以便它们重新加载更新后的 `PATH` 环境变量。
 
-如果你更喜欢并排管理多个 Node 版本，请从 <https://github.com/coreybutler/nvm-windows> 安装 nvm-windows。然后运行 `nvm install lts`，接着运行 `nvm use lts`。
+如果你希望同时管理多个 Node 版本，可以安装 `nvm-windows`：
+
+<https://github.com/coreybutler/nvm-windows>
+
+安装完成后，执行以下命令：
+
+```bash
+nvm install lts
+nvm use lts
+```
 
 ### B.1.2 在 macOS 上安装 Node.js
 
-在 macOS 上，推荐的方法是使用 Homebrew，它可以使 Node 与其他开发工具一起保持最新。在终端中运行：
+在 macOS 上，推荐使用 Homebrew，因为它能够与你的其他开发工具一起保持 Node 的更新。在终端中执行：
 
+```bash
 brew install node
+```
 
-如果你没有安装 Homebrew，请先按照 <https://brew.sh> 上的说明进行操作。或者，你也可以从 <https://nodejs.org> 下载 macOS .pkg 安装程序，并像运行其他 macOS 安装程序一样运行它。
+如果尚未安装 Homebrew，请先访问以下地址并按照说明完成安装：
+
+<https://brew.sh>
+
+或者，你也可以从以下网站下载 macOS 的 `.pkg` 安装包，并像安装其他 macOS 软件一样完成安装：
+
+<https://nodejs.org>
 
 ### B.1.3 在 Linux 或 WSL 上安装 Node.js
 
-在 Linux 和 Windows Subsystem for Linux（WSL）上，推荐的方法是使用 nvm（Node Version Manager）。与发行版的系统包不同，nvm 允许你在每个项目的基础上切换 Node 版本，而无需使用 `sudo`。使用以下命令安装它：
+在 Linux 和 Windows Subsystem for Linux（WSL）环境中，推荐使用 Node Version Manager（`nvm`）。
 
+与发行版自带的软件包不同，`nvm` 允许你按项目切换 Node 版本，而无需使用 `sudo`。
+
+执行以下命令安装：
+
+```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
 
-关闭并重新打开你的终端，以便获取新的 shell 配置；然后安装并激活 Node 的 LTS 版本：
+关闭并重新打开终端，使新的 Shell 配置生效。然后安装并启用 Node 的 LTS 版本：
 
+```bash
 nvm install --lts
 nvm use --lts
+```
 
-如果你更倾向于使用你的发行版的包管理器，Node.js 项目在 [https://github.com/nodesource/distributions](https://github.com/nodesource/distributions) 发布了官方的 APT 和 DNF 仓库。请按照该处的说明进行特定发行版的操作。
+如果你更喜欢使用发行版自带的包管理器，Node.js 项目也提供了官方的 APT 和 DNF 软件源：
 
-## B.2 验证你的 Node 和 npx 安装
+<https://github.com/nodesource/distributions>
 
-一旦 Node 安装完成，花点时间来确认一切都在你的 PATH 中，并建立一个关于 npx 如何处理它运行的包的思维模型是值得的。以下小节涵盖了版本检查和 npx 缓存的简要介绍。
+请根据你的发行版，参考该仓库中的具体说明完成安装。
 
-### B.2.1 检查已安装的版本
+## B.2 验证 Node 和 npx 安装
 
-打开一个新的终端窗口并运行以下三个命令：
+安装完成后，建议花一点时间确认相关命令已经加入 `PATH`，并建立对 `npx` 如何处理软件包的基本认知。
 
+以下小节将介绍版本检查方法，以及 `npx` 缓存机制的工作原理。
+
+### B.2.1 检查已安装版本
+
+打开一个新的终端窗口，并执行以下三个命令：
+
+```bash
 node --version
 npm --version
 npx --version
+```
 
-每个命令都应打印一个版本号。`node --version` 应显示 v20 或更高版本，`npm --version` 和 `npx --version` 应分别显示接近 10 的数字。如果这三个命令中的任何一个返回“命令未找到”错误，则安装程序的 PATH 更新未生效。关闭并重新打开你的终端（或整个 shell 会话），然后重试。
+每条命令都应输出一个版本号。
 
-### B.2.2 npx 如何查找和缓存包
+* `node --version` 应返回 `v20` 或更高版本。
+* `npm --version` 和 `npx --version` 应返回接近 `10` 的版本号。
 
-当你使用 npx 运行一个包时，它大致会执行以下操作：
+如果其中任意一个命令返回“Command Not Found（命令未找到）”错误，则说明安装程序对 `PATH` 的更新尚未生效。请关闭并重新打开终端（必要时重启整个 Shell 会话），然后再次尝试。
 
-* 它会在你的本地 node_modules 文件夹中查找该包。如果在那里找到可执行文件，它就会运行那个副本。
-* 如果该包未在本地安装，它会在全局 npm 缓存中查找，位置为 ~/.npm/_npx（或 Windows 上的等效路径）。如果请求的版本已被缓存，它就会运行缓存的副本。
-* 如果该包也未被缓存，npx 会从 npm 注册表下载它，将其放入缓存，然后运行它。
+### B.2.2 npx 如何查找和缓存软件包
 
-实际的结果是，使用 npx 首次运行 MCP 服务器的时间明显长于后续运行，因为它需要花费时间下载包。从第二次运行开始，npx 只是启动缓存的副本。
+当你使用 `npx` 运行一个软件包时，它大致会执行以下步骤：
 
-> 提示：`-y` 标志（将在下一节介绍）告诉 npx 跳过交互式的“需要安装以下包，确定？”提示。MCP 客户端将 MCP 服务器作为子进程生成，它们无法回答该提示，因此在配置客户端时始终包含 `-y`。
+* 首先检查当前项目的 `node_modules` 目录。如果在那里找到可执行文件，就直接运行该副本。
+* 如果本地未安装，则检查全局 npm 缓存目录 `~/.npm/_npx`（Windows 上为对应目录）。如果请求的版本已经缓存，则直接运行缓存副本。
+* 如果缓存中也不存在，则从 npm 仓库下载软件包，将其放入缓存后再运行。
+
+这意味着：第一次使用 `npx` 启动 MCP 服务器时，速度通常会明显较慢，因为它需要下载软件包。而从第二次开始，`npx` 会直接运行缓存版本，因此启动速度会快很多。
+
+> **提示：** `-y` 参数（将在下一节介绍）会让 `npx` 自动跳过“Need to install the following packages, ok?” 的交互式确认提示。由于 MCP 客户端在以子进程方式启动 MCP 服务器时无法回答该提示，因此在配置 MCP 客户端时，应始终添加 `-y` 参数。
 
 ## B.3 使用 npx 运行 MCP 服务器
 
-安装并验证 Node 后，你就可以运行 MCP 服务器了。以下小节将 npx 命令分解为其组成部分，然后使用官方的文件系统 MCP 服务器逐步完成一个具体示例，最后展示如何将该服务器连接到 MCP 客户端。
+当 Node 安装并验证完成后，你就可以运行 MCP 服务器了。
 
-### B.3.1 npx 命令的构成
+以下小节将首先拆解 `npx` 命令的组成部分，然后使用官方的 Filesystem MCP Server 作为示例，最后介绍如何将该服务器接入 MCP 客户端。
 
-启动 MCP 服务器的典型 npx 命令有四个部分：
+### B.3.1 npx 命令结构
 
-npx -y <包名> [服务器参数...]
+使用 `npx` 启动 MCP 服务器的典型命令如下：
 
-* `npx` — 随 Node.js 附带的启动器。
-* `-y` — `--yes` 的缩写。自动接受安装提示，当 MCP 客户端将服务器作为子进程生成时是必需的。
-* `<包名>` — 提供 MCP 服务器的 npm 包，例如 `@modelcontextprotocol/server-filesystem`。
-* `[服务器参数...]` — MCP 服务器本身接受的任何参数。这些参数会传递给服务器进程。例如，文件系统服务器接受一个或多个目录路径，MCP 客户端将被允许在这些路径中进行读写。
+```bash
+npx -y <package-name> [server-arguments...]
+```
 
-### B.3.2 运行文件系统 MCP 服务器
+其组成部分如下：
 
-作为一个具体示例，官方的文件系统 MCP 服务器位于 npm 上的 `@modelcontextprotocol/server-filesystem`。要针对单个目录运行它，请打开一个终端并运行：
+* `npx` —— Node.js 自带的启动器。
+* `-y` —— `--yes` 的缩写。自动接受安装提示，这是 MCP 客户端以子进程方式启动服务器时的必需参数。
+* `<package-name>` —— 提供 MCP 服务器的 npm 软件包名称，例如 `@modelcontextprotocol/server-filesystem`。
+* `[server-arguments...]` —— MCP 服务器本身支持的参数，这些参数会原样传递给服务器进程。例如，Filesystem MCP Server 接收一个或多个目录路径，用于指定 MCP 客户端可以读写的目录范围。
 
+### B.3.2 运行 Filesystem MCP Server
+
+作为一个具体示例，官方的 Filesystem MCP Server 在 npm 上的包名为 `@modelcontextprotocol/server-filesystem`。要让它对单个目录提供服务，请打开终端并执行：
+
+```bash
 npx -y @modelcontextprotocol/server-filesystem /path/to/allowed/directory
+```
 
-在 Windows 上，将 Unix 风格的路径替换为 Windows 路径，例如：
+在 Windows 上，请将 Unix 风格路径替换为 Windows 路径，例如：
 
+```bash
 npx -y @modelcontextprotocol/server-filesystem C:\Users\you\Documents
+```
 
-首次运行会下载该包，可能需要几秒钟；后续运行几乎会立即启动。一旦服务器运行，它会使用 MCP 协议通过标准输入和输出与其客户端通信。直接在终端中运行它主要用作健全性检查：服务器会打印启动横幅，然后等待 stdin 上的 MCP 消息。按 Ctrl-C 停止它。
+第一次运行时需要下载软件包，因此可能需要几秒钟；之后再次运行时，通常会立即启动。
 
-### B.3.3 将服务器连接到 MCP 客户端
+服务器启动后，会通过标准输入（stdin）和标准输出（stdout）使用 MCP 协议与客户端进行通信。直接在终端中运行它主要用于确认环境是否正常：服务器会输出启动信息，然后等待来自 stdin 的 MCP 消息。
 
-MCP 客户端将其服务器作为子进程启动，这意味着你通常不会自己运行 npx 命令——而是在配置文件中向客户端描述它。该文件的确切位置取决于客户端。例如，Claude Desktop 从你用户配置文件中的一个 JSON 配置文件读取。文件系统服务器的条目如下所示：
+按下 `Ctrl-C` 即可停止服务器。
+
+### B.3.3 将服务器接入 MCP 客户端
+
+MCP 客户端会以子进程（subprocess）的形式启动 MCP 服务器，因此通常情况下，你不需要自己执行 `npx` 命令，而是需要在客户端配置文件中描述该命令。
+
+配置文件的位置取决于具体客户端。例如，Claude Desktop 会从用户目录下的 JSON 配置文件中读取 MCP 配置。
+
+Filesystem MCP Server 的配置示例如下：
 
 ```json
 {
- "mcpServers": {
-   "filesystem": {
-     "command": "npx",
-     "args": [
-       "-y",
-       "@modelcontextprotocol/server-filesystem",
-       "/path/to/allowed/directory"
-     ]
-   }
- }
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/directory"
+      ]
+    }
+  }
 }
 ```
 
-注意 `command` 字段就是 `npx`，而包名作为 `args` 条目之一出现，`-y` 列在前面以抑制安装提示。这种模式适用于在 npm 上发布的任何 MCP 服务器：更改包名和尾随参数以匹配你想要运行的服务器。
+请注意：
 
-## B.4 故障排除和保持 Node 健康
+* `command` 字段仅填写 `npx`。
+* 包名作为 `args` 中的一个参数传入。
+* `-y` 必须放在最前面，以避免出现安装确认提示。
 
-大多数由 npx 启动的 MCP 服务器的问题都属于几个类别之一。以下小节涵盖了你最可能遇到的问题、如何在过时副本导致问题时清除 npx 缓存，以及如何保持 Node 本身更新。
+这一模式适用于所有发布到 npm 的 MCP 服务器：只需要替换包名以及后续参数，即可启动你需要的 MCP 服务。
+
+## B.4 排查问题并保持 Node 环境健康
+
+通过 `npx` 启动 MCP 服务器时，大多数问题都属于少数几个固定类别。
+
+以下小节将介绍最常见的问题、如何清理 `npx` 缓存，以及如何保持 Node 本身处于最新状态。
 
 ### B.4.1 常见问题
 
 以下是你最可能遇到的问题：
 
-* `"npx: command not found"` — 你的 shell 找不到 Node 二进制文件。关闭并重新打开你的终端以便获取更新的 PATH。在 macOS 和 Linux 上，确认在当前 shell 中已运行 `nvm use --lts`，或将其添加到你的 shell 启动文件中。
-* `EACCES` _或安装期间的权限错误_ — 你使用 `sudo` 安装了 Node，并且缓存现在归 root 所有。最干净的修复方法是移除系统范围的安装并切换到 nvm，后者将 Node 安装到你的主目录中。
-* _MCP 客户端报告服务器立即退出_ — 直接在终端中运行相同的 npx 命令。服务器的错误消息会显示在那里，但通常会被客户端吞没。
-* _MCP 客户端在启动时挂起_ — 你几乎肯定忘记了 `-y` 标志，并且 npx 正在等待客户端无法回答的安装确认提示。
+* `npx: command not found`
+  
+  当前 Shell 无法找到 Node 可执行文件。请关闭并重新打开终端，使更新后的 `PATH` 生效。
 
-### B.4.2 清除 npx 缓存
+  在 macOS 和 Linux 上，请确认当前 Shell 已执行：
 
-如果你怀疑 npx 正在运行 MCP 服务器的过时副本（例如，在包发布了你想获取的修复后），请清除缓存并让它在下次运行时重新下载：
+  ```bash
+  nvm use --lts
+  ```
 
+  或将该命令加入 Shell 启动文件（例如 `.bashrc`、`.zshrc`）。
+
+* 安装过程中出现 `EACCES` 或权限错误
+
+  这通常意味着你使用 `sudo` 安装了 Node，导致缓存目录属于 `root` 用户。
+
+  最干净的解决方案是卸载系统级安装，并改用 `nvm`，因为它会将 Node 安装到用户目录中。
+
+* MCP 客户端报告“服务器立即退出”
+
+  请直接在终端中执行同样的 `npx` 命令。
+
+  MCP 服务器输出的错误信息通常会显示在终端中，但客户端往往会吞掉这些信息，因此无法直接看到。
+
+* MCP 客户端启动时卡住
+
+  几乎可以肯定是忘记添加 `-y` 参数。
+
+  此时，`npx` 正在等待安装确认提示，而 MCP 客户端无法响应该交互，因此会一直卡住。
+
+### B.4.2 清理 npx 缓存
+
+如果你怀疑 `npx` 正在运行 MCP 服务器的旧版本（例如软件包已经发布了修复，而你希望立即使用最新版本），可以清理缓存，并在下次运行时重新下载：
+
+```bash
 npm cache clean --force
+```
 
-要在下次运行时固定特定版本，请改为在包名后附加 `@<版本>`，例如 `npx -y @modelcontextprotocol/server-filesystem@latest`。这会强制 npx 在运行前根据注册表解析请求的版本。
+如果你希望固定使用某个特定版本，可以在包名后追加 `@<version>`，例如：
+
+```bash
+npx -y @modelcontextprotocol/server-filesystem@latest
+```
+
+这样会强制 `npx` 在运行前到 npm 仓库解析并获取指定版本。
 
 ### B.4.3 更新 Node
 
-Node 大约每年发布一个新的 LTS 版本。为了保持在当前的 LTS 上，请使用你安装 Node 时使用的相同工具定期更新：
+Node 大约每年发布一个新的 LTS 版本。为了始终保持使用当前的长期支持版，建议定期更新。
 
-* 在 Windows 上使用官方安装程序，从 <https://nodejs.org> 下载最新的 LTS .msi，然后运行它。安装程序会就地升级现有安装。
-* 在 macOS 上使用 Homebrew，运行 `brew upgrade node`。
-* 在 Linux、macOS 或 WSL 上使用 `nvm`，运行 `nvm install --lts`，然后运行 `nvm alias default lts/*` 以使新版本成为未来 shell 的默认版本。
+更新方式取决于你的安装方式：
 
-升级后，再次运行 B.2.1 节中的三个版本检查，以确认新版本在你的 PATH 中。
+* 如果是在 Windows 上通过官方安装包安装，请访问：
+
+  <https://nodejs.org>
+
+  下载最新的 LTS `.msi` 文件并运行。安装程序会自动覆盖现有版本。
+
+* 如果在 macOS 上使用 Homebrew，请执行：
+
+```bash
+brew upgrade node
+```
+
+* 如果在 Linux、macOS 或 WSL 上使用 `nvm`，请执行：
+
+```bash
+nvm install --lts
+nvm alias default lts/*
+```
+
+上述命令会安装新的 LTS 版本，并将其设置为未来所有 Shell 会话的默认版本。
+
+升级完成后，请再次执行 B.2.1 节中的三个版本检查命令，以确认新的 Node、npm 和 npx 已正确加入 `PATH` 环境变量。

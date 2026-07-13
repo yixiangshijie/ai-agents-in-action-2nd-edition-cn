@@ -1,0 +1,19 @@
+{
+  "editor.semanticHighlighting.enabled": true,
+  "editor.tokenColorCustomizations": {
+    // ...existing code...
+  },
+
+  // Python-specific settings
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.formatting.provider": "autopep8",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "workbench.colorTheme": "Visual Studio 2019 Dark plus syntax"
+}

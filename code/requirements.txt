@@ -1,0 +1,31 @@
+openai-agents  # Provides tools for building and running OpenAI-based agents
+pydantic  # Data validation and settings management using Python type annotations
+python-dotenv  # Loads environment variables from a .env file
+autopep8  # Automatically formats Python code to conform to PEP 8
+pylint  # Linter for Python code to enforce coding standards
+flake8  # Combines linting tools for style guide enforcement
+isort  # Automatically sorts Python imports
+mypy  # Static type checker for Python
+mcp[cli]
+uv # for project management and running application servers for Claude etc.
+openai-agents[viz]  # Visualization tools for OpenAI agents
+
+plotly  # For creating interactive visualizations
+numpy  # Fundamental package for scientific computing with Python
+chromadb  # Vector database for storing and querying embeddings
+tiktoken
+
+# A2A
+google-adk[a2a]
+litellm
+
+matplotlib  # For plotting and visualizing data
+
+# For tracing, monitoring, and evaluation
+arize-phoenix
+openinference-instrumentation-openai-agents
+openinference-instrumentation-openai
+
+# For web applications and APIs
+fastapi 
+uvicorn[standard]
